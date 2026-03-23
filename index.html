@@ -190,7 +190,7 @@ tr:hover td{background:rgba(255,255,255,0.012);}
   <div class="nav-sec personal-only">
     <div class="nav-lbl">Personal</div>
     <button class="nb active" onclick="go('dash')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1.5" fill="currentColor" opacity=".5"/><rect x="1" y="8" width="5" height="5" rx="1.5" fill="currentColor" opacity=".5"/><rect x="8" y="8" width="5" height="5" rx="1.5" fill="currentColor"/></svg>Dashboard</button>
-    <button class="nb" onclick="go('log')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Registrar</button>
+    <button class="nb" onclick="go('lounge')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Lounge / FFA</button>
   </div>
   <div class="nav-sec personal-only" style="margin-top:6px;">
     <div class="nav-lbl">Análisis personal</div>
@@ -202,7 +202,8 @@ tr:hover td{background:rgba(255,255,255,0.012);}
   </div>
   <div class="nav-sec" style="margin-top:6px;">
     <div class="nav-lbl">Equipo · Firebase</div>
-    <button class="nb" onclick="go('wars')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L8.5 5.5H12.5L9.5 7.8l1.2 4-3.7-2.6L3.3 11.8l1.2-4L1.5 5.5h4L7 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>Wars 6v6</button>
+    <button class="nb" onclick="go('war6v6')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L8.5 5.5H12.5L9.5 7.8l1.2 4-3.7-2.6L3.3 11.8l1.2-4L1.5 5.5h4L7 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>Registrar war</button>
+    <button class="nb" onclick="go('wars')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M2 11L5 7l2.5 2.5L10 5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Wars — análisis</button>
     <button class="nb" onclick="go('history')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 5.5h4M5 8h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Historial</button>
   </div>
   <div class="personal-only" style="margin-top:auto;padding:10px 12px 0;border-top:1px solid var(--border);">
@@ -255,148 +256,145 @@ tr:hover td{background:rgba(255,255,255,0.012);}
   <div class="card"><div class="ct">Últimos 5 eventos</div><div id="d-recent"><div class="empty"><div class="et">Sin eventos</div></div></div></div>
 </div>
 
-<!-- ══ LOG ══ -->
-<div id="page-log" class="page">
-  <div class="ph"><div class="pt">Registrar evento</div><div class="ps">Cada evento es un dato. Cada dato es una ventaja.</div></div>
-  <div class="tabs"><button class="tab active" id="tl" onclick="switchT('l')">Lounge / FFA</button><button class="tab" id="tw" onclick="switchT('w')">War 6v6</button></div>
+<!-- ══ LOUNGE (personal) ══ -->
+<div id="page-lounge" class="page">
+  <div class="ph"><div class="pt">Lounge / FFA</div><div class="ps">Registro personal — Michell Mercado</div></div>
+  <div class="card">
+    <div class="ct">Datos del evento</div>
+    <div class="g2">
+      <div><label>Fecha</label><input type="text" id="l-date" placeholder="22/03/2026"></div>
+      <div><label>Tier del evento</label>
+        <select id="l-tier"><option>Tier X</option><option>Tier S</option><option>Tier A</option><option>Tier B</option><option>Tier C</option><option selected>Tier CD</option><option>Tier D</option><option>Tier DE</option><option>Tier E</option><option>Tier EF</option><option>Tier F</option><option>Tier G</option></select>
+      </div>
+      <div><label>Formato</label><select id="l-format"><option>FFA</option><option>2v2</option><option>3v3</option><option>4v4</option><option>Mogi</option></select></div>
+      <div><label>MMR cambio (+/-)</label><input type="number" id="l-mmr" placeholder="+133 o -49"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <label style="margin-bottom:0;">Posiciones por carrera — 12 carreras</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--muted2);">Score:</span>
+          <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent3);" id="l-score-display">0</span>
+          <span style="font-size:10px;color:var(--muted);">/180</span>
+        </div>
+      </div>
+      <div id="races-grid-l" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
+      <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="fillRaces('l',6)">Llenar con 6°</button>
+        <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="fillRaces('l',4)">Llenar con 4°</button>
+        <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="clearRaces('l')">Limpiar</button>
+        <span style="font-size:9px;color:var(--muted);">Avg: <span id="l-avg-pos">—</span></span>
+      </div>
+      <div style="margin-top:7px;padding:6px 10px;background:var(--bg3);border-radius:6px;display:flex;gap:5px;flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">1°→15</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">2°→12</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">3°→10</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">4°→9</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">5°→8</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">6°→7</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">7°→6</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">8°→5</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">9°→4</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">10°→3</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">11°→2</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">12°→1</span>
+      </div>
+    </div>
+    <label>Pistas (en orden)</label>
+    <div id="tp-l" class="sos"></div>
+    <label>Sensaciones</label>
+    <div id="ls-b" class="sos">
+      <button class="so" onclick="togS(this,'flow')">Flow total</button>
+      <button class="so" onclick="togS(this,'concentrado')">Concentrado</button>
+      <button class="so" onclick="togS(this,'normal')">Normal</button>
+      <button class="so" onclick="togS(this,'tenso')">Tenso</button>
+      <button class="so" onclick="togS(this,'desconcentrado')">Desconcentrado</button>
+      <button class="so" onclick="togS(this,'targeteo')">Bajo targeteo</button>
+      <button class="so" onclick="togS(this,'lag')">Lag/caos</button>
+      <button class="so" onclick="togS(this,'ego')">Jugué con ego</button>
+      <button class="so" onclick="togS(this,'cansado')">Cansado</button>
+      <button class="so" onclick="togS(this,'frustrado')">Frustrado</button>
+      <button class="so" onclick="togS(this,'predictivo')">Modo predictivo</button>
+      <button class="so" onclick="togS(this,'cierre-limpio')">Cierre limpio</button>
+    </div>
+    <label>Notas post-evento</label>
+    <textarea id="l-notes" placeholder="¿Qué pasó? ¿Qué funcionó? ¿Dónde perdiste posición?"></textarea>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:2px;">
+      <button class="btn bp" onclick="saveLounge()">Guardar evento</button>
+      <button class="btn bg" onclick="aiAnalyzeNotes('l-notes','lnp')">Analizar con IA</button>
+    </div>
+    <div id="lnp" style="margin-top:8px;display:none;"></div>
+  </div>
+</div>
 
-  <!-- LOUNGE FORM -->
-  <div id="fl">
-    <div class="card">
-      <div class="ct">Datos del evento — Michell Mercado</div>
-      <div class="g2">
-        <div><label>Fecha</label><input type="text" id="l-date" placeholder="22/03/2026"></div>
-        <div><label>Tier del evento</label>
-          <select id="l-tier"><option>Tier X</option><option>Tier S</option><option>Tier A</option><option>Tier B</option><option>Tier C</option><option selected>Tier CD</option><option>Tier D</option><option>Tier DE</option><option>Tier E</option><option>Tier EF</option><option>Tier F</option><option>Tier G</option></select>
-        </div>
-        <div><label>Formato</label><select id="l-format"><option>FFA</option><option>2v2</option><option>3v3</option><option>4v4</option><option>Mogi</option></select></div>
-        <div><label>MMR cambio (+/-)</label><input type="number" id="l-mmr" placeholder="+133 o -49"></div>
+<!-- ══ WAR 6v6 (equipo) ══ -->
+<div id="page-war6v6" class="page">
+  <div class="ph"><div class="pt">Registrar War 6v6</div><div class="ps">Captura de datos del equipo — sincroniza en Firebase</div></div>
+
+  <div class="card" style="border-color:rgba(0,206,201,0.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="ct" style="margin-bottom:0;">Pool de jugadores del equipo</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="fb-pool-status" style="font-family:var(--mono);font-size:8px;color:var(--muted2);">cargando...</span>
+        <button class="btn bg" style="font-size:9px;padding:3px 9px;" onclick="savePool()">Guardar pool</button>
       </div>
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <label style="margin-bottom:0;">Posiciones por carrera — 12 carreras</label>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;color:var(--muted2);">Score:</span>
-            <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent3);" id="l-score-display">0</span>
-            <span style="font-size:10px;color:var(--muted);">/180</span>
-          </div>
-        </div>
-        <div id="races-grid-l" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
-        <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="fillRaces('l',6)">Llenar con 6°</button>
-          <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="fillRaces('l',4)">Llenar con 4°</button>
-          <button class="btn bg" style="font-size:10px;padding:4px 9px;" onclick="clearRaces('l')">Limpiar</button>
-          <span style="font-size:9px;color:var(--muted);">Avg: <span id="l-avg-pos">—</span></span>
-        </div>
-        <div style="margin-top:7px;padding:6px 10px;background:var(--bg3);border-radius:6px;display:flex;gap:5px;flex-wrap:wrap;">
-          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);">1°→15</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">2°→12</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">3°→10</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">4°→9</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">5°→8</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">6°→7</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">7°→6</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">8°→5</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">9°→4</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">10°→3</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">11°→2</span><span style="font-family:var(--mono);font-size:9px;color:var(--muted);">12°→1</span>
-        </div>
-      </div>
-      <label>Pistas (en orden)</label>
-      <div id="tp-l" class="sos"></div>
-      <label>Sensaciones</label>
-      <div id="ls-b" class="sos">
-        <button class="so" onclick="togS(this,'flow')">Flow total</button>
-        <button class="so" onclick="togS(this,'concentrado')">Concentrado</button>
-        <button class="so" onclick="togS(this,'normal')">Normal</button>
-        <button class="so" onclick="togS(this,'tenso')">Tenso</button>
-        <button class="so" onclick="togS(this,'desconcentrado')">Desconcentrado</button>
-        <button class="so" onclick="togS(this,'targeteo')">Bajo targeteo</button>
-        <button class="so" onclick="togS(this,'lag')">Lag/caos</button>
-        <button class="so" onclick="togS(this,'ego')">Jugué con ego</button>
-        <button class="so" onclick="togS(this,'cansado')">Cansado</button>
-        <button class="so" onclick="togS(this,'frustrado')">Frustrado</button>
-        <button class="so" onclick="togS(this,'predictivo')">Modo predictivo</button>
-        <button class="so" onclick="togS(this,'cierre-limpio')">Cierre limpio</button>
-      </div>
-      <label>Notas post-evento</label>
-      <textarea id="l-notes" placeholder="¿Qué pasó? ¿Qué funcionó? ¿Dónde perdiste posición?"></textarea>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:2px;">
-        <button class="btn bp" onclick="saveLounge()">Guardar evento</button>
-        <button class="btn bg" onclick="aiAnalyzeNotes('l-notes','lnp')">Analizar con IA</button>
-      </div>
-      <div id="lnp" style="margin-top:8px;display:none;"></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;">Clic en un nombre para insertar al roster. × para mover a inactivo.</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <input type="text" id="pool-new-name" placeholder="Nombre del jugador" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')addToPool()">
+      <button class="btn bp" style="font-size:11px;padding:6px 12px;" onclick="addToPool()">+ Agregar</button>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-bottom:4px;">Activos</div>
+    <div id="pool-list" style="display:flex;gap:5px;flex-wrap:wrap;min-height:24px;margin-bottom:8px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:8px;">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:4px;">Histórico / inactivos — clic para reactivar</div>
+      <div id="pool-inactive" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
     </div>
   </div>
 
-  <!-- WAR FORM -->
-  <div id="fw" style="display:none;">
-    <div class="card" style="border-color:rgba(0,206,201,0.2);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="ct" style="margin-bottom:0;">Pool de jugadores del equipo</div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span id="fb-pool-status" style="font-family:var(--mono);font-size:8px;color:var(--muted2);">cargando...</span>
-          <button class="btn bg" style="font-size:9px;padding:3px 9px;" onclick="savePool()">Guardar pool</button>
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;">Clic en un nombre para insertar al roster. × para mover a inactivo.</div>
-      <div style="display:flex;gap:6px;margin-bottom:8px;">
-        <input type="text" id="pool-new-name" placeholder="Nombre del jugador" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')addToPool()">
-        <button class="btn bp" style="font-size:11px;padding:6px 12px;" onclick="addToPool()">+ Agregar</button>
-      </div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:4px;">Activos</div>
-      <div id="pool-list" style="display:flex;gap:5px;flex-wrap:wrap;min-height:24px;margin-bottom:8px;"></div>
-      <div style="border-top:1px solid var(--border);padding-top:8px;">
-        <div style="font-size:9px;color:var(--muted);margin-bottom:4px;">Histórico / inactivos — clic para reactivar</div>
-        <div id="pool-inactive" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
-      </div>
+  <div class="card">
+    <div class="ct">Roster del war</div>
+    <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;">Selecciona desde el pool. Solo aparecen jugadores activos.</div>
+    <div id="roster-inputs" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div><label>Jugador 1</label><select id="p0" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+      <div><label>Jugador 2</label><select id="p1" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+      <div><label>Jugador 3</label><select id="p2" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+      <div><label>Jugador 4</label><select id="p3" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+      <div><label>Jugador 5</label><select id="p4" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+      <div><label>Jugador 6</label><select id="p5" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
     </div>
+    <button class="btn bg" style="font-size:10px;padding:4px 10px;" onclick="clearRosterSlots()">Limpiar slots</button>
+  </div>
 
-    <div class="card">
-      <div class="ct">Roster del war</div>
-      <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;">Selecciona desde el pool. Solo aparecen jugadores activos.</div>
-      <div id="roster-inputs" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div><label>Jugador 1</label><select id="p0" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-        <div><label>Jugador 2</label><select id="p1" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-        <div><label>Jugador 3</label><select id="p2" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-        <div><label>Jugador 4</label><select id="p3" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-        <div><label>Jugador 5</label><select id="p4" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-        <div><label>Jugador 6</label><select id="p5" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
-      </div>
-      <button class="btn bg" style="font-size:10px;padding:4px 10px;" onclick="clearRosterSlots()">Limpiar slots</button>
+  <div class="card">
+    <div class="ct">Datos del war</div>
+    <div class="g2">
+      <div><label>Fecha</label><input type="text" id="w-date" placeholder="22/03/2026"></div>
+      <div><label>Liga</label><select id="w-league"><option>Atlas League</option><option>MKU</option><option>Clan war amistoso</option><option>Otro</option></select></div>
+      <div><label>Nombre del clan rival</label><input type="text" id="w-rival-name" placeholder="Ej: Team Rocket"></div>
+      <div><label>Rival div/tier</label><input type="text" id="w-rival" placeholder="Div 9 / Tier D"></div>
+      <div><label>Puntos nuestro equipo</label><input type="number" id="w-us" placeholder="512"></div>
+      <div><label>Puntos rival</label><input type="number" id="w-them" placeholder="472"></div>
+      <div><label>Resultado</label><select id="w-result"><option value="win">Victoria</option><option value="loss">Derrota</option><option value="tie">Empate</option></select></div>
+      <div><label>MMR cambio (+/-)</label><input type="number" id="w-mmr" placeholder="opcional"></div>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="ct">Datos del war</div>
-      <div class="g2">
-        <div><label>Fecha</label><input type="text" id="w-date" placeholder="22/03/2026"></div>
-        <div><label>Liga</label><select id="w-league"><option>Atlas League</option><option>MKU</option><option>Clan war amistoso</option><option>Otro</option></select></div>
-        <div><label>Nombre del clan rival</label><input type="text" id="w-rival-name" placeholder="Ej: Team Rocket"></div>
-        <div><label>Rival div/tier</label><input type="text" id="w-rival" placeholder="Div 9 / Tier D"></div>
-        <div><label>Puntos nuestro equipo</label><input type="number" id="w-us" placeholder="512"></div>
-        <div><label>Puntos rival</label><input type="number" id="w-them" placeholder="472"></div>
-        <div><label>Resultado</label><select id="w-result"><option value="win">Victoria</option><option value="loss">Derrota</option><option value="tie">Empate</option></select></div>
-        <div><label>MMR cambio (+/-)</label><input type="number" id="w-mmr" placeholder="opcional"></div>
-      </div>
-    </div>
+  <div class="card">
+    <div class="ct">12 carreras — pista + posiciones por jugador</div>
+    <div id="war-races-container"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn bg" style="font-size:10px;padding:5px 10px;" onclick="clearWRaces()">Limpiar posiciones</button></div>
+  </div>
 
-    <div class="card">
-      <div class="ct">12 carreras — pista + posiciones por jugador</div>
-      <div id="war-races-container"></div>
-      <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn bg" style="font-size:10px;padding:5px 10px;" onclick="clearWRaces()">Limpiar posiciones</button></div>
+  <div class="card">
+    <div class="ct">Estado del equipo y notas</div>
+    <div id="ws-b" class="sos">
+      <button class="so" onclick="togW(this,'coordinacion-alta')">Coordinación alta</button>
+      <button class="so" onclick="togW(this,'flow')">Flow colectivo</button>
+      <button class="so" onclick="togW(this,'tenso')">Tenso</button>
+      <button class="so" onclick="togW(this,'rival-fuerte')">Rival más fuerte</button>
+      <button class="so" onclick="togW(this,'targeteo-rival')">Targeteo del rival</button>
+      <button class="so" onclick="togW(this,'equipo-flojo')">Equipo flojo</button>
+      <button class="so" onclick="togW(this,'lag')">Lag/caos</button>
+      <button class="so" onclick="togW(this,'remontada')">Remontada</button>
     </div>
-
-    <div class="card">
-      <div class="ct">Estado del equipo y notas</div>
-      <div id="ws-b" class="sos">
-        <button class="so" onclick="togW(this,'coordinacion-alta')">Coordinación alta</button>
-        <button class="so" onclick="togW(this,'flow')">Flow colectivo</button>
-        <button class="so" onclick="togW(this,'tenso')">Tenso</button>
-        <button class="so" onclick="togW(this,'rival-fuerte')">Rival más fuerte</button>
-        <button class="so" onclick="togW(this,'targeteo-rival')">Targeteo del rival</button>
-        <button class="so" onclick="togW(this,'equipo-flojo')">Equipo flojo</button>
-        <button class="so" onclick="togW(this,'lag')">Lag/caos</button>
-        <button class="so" onclick="togW(this,'remontada')">Remontada</button>
-      </div>
-      <label>Notas tácticas</label>
-      <textarea id="w-notes" placeholder="¿Qué táctica funcionó? ¿Pistas del rival? ¿Coordinación?"></textarea>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center;">
-        <button class="btn bp" onclick="saveWar()">Guardar war</button>
-        <button class="btn bg" onclick="aiAnalyzeNotes('w-notes','wnp')">Analizar con IA</button>
-        <span id="fb-save-status" style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-left:4px;"></span>
-      </div>
-      <div id="wnp" style="margin-top:8px;display:none;"></div>
+    <label>Notas tácticas</label>
+    <textarea id="w-notes" placeholder="¿Qué táctica funcionó? ¿Pistas del rival? ¿Coordinación?"></textarea>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+      <button class="btn bp" onclick="saveWar()">Guardar war</button>
+      <button class="btn bg" onclick="aiAnalyzeNotes('w-notes','wnp')">Analizar con IA</button>
+      <span id="fb-save-status" style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-left:4px;"></span>
     </div>
+    <div id="wnp" style="margin-top:8px;display:none;"></div>
   </div>
 </div>
 
@@ -735,7 +733,7 @@ function saveLounge(){
   const filled=positions.filter(p=>p>0);
   const avgPos=filled.length?Math.round((filled.reduce((a,b)=>a+b,0)/filled.length)*10)/10:0;
   db.ev.push({id:Date.now(),type:'l',date,tier:document.getElementById('l-tier').value,fmt:document.getElementById('l-format').value,mmr:parseInt(document.getElementById('l-mmr').value)||0,score,positions,avgPos,tracks:getTracks('tp-l'),sens:[...selS],notes:document.getElementById('l-notes').value.trim()});
-  save();resetL();refreshAll();go('history');alert('Evento guardado.');
+  save();resetL();refreshAll();go('lounge');alert('Evento guardado.');
 }
 function resetL(){
   ['l-date','l-mmr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -929,22 +927,19 @@ function resetW(){
 // NAV + MODO PERSONAL/EQUIPO
 // ════════════════════════════════════════
 let isTeamMode = false;
-const TEAM_PIN = '1987'; // PIN para acceder al modo personal desde modo equipo
+const TEAM_PIN = '1987';
 
 function toggleMode(){
   if(!isTeamMode){
-    // Pasar a modo equipo
-    isTeamMode = true;
+    isTeamMode=true;
     document.querySelector('.shell').classList.add('team-mode');
     document.getElementById('mode-badge').className='mode-badge mode-team';
     document.getElementById('mode-badge').textContent='⬡ Modo equipo';
-    // Si está en sección personal, redirigir a wars
     const activePage=document.querySelector('.page.active')?.id;
-    if(['page-dash','page-log','page-patterns','page-tutorial','page-sentiment','page-refinement','page-tracks'].includes(activePage)){
-      go('wars');
+    if(['page-dash','page-lounge','page-patterns','page-tutorial','page-sentiment','page-refinement','page-tracks'].includes(activePage)){
+      go('war6v6');
     }
   } else {
-    // Volver a modo personal con PIN
     const pin=prompt('PIN de acceso personal:');
     if(pin===TEAM_PIN){
       isTeamMode=false;
@@ -958,15 +953,13 @@ function toggleMode(){
 }
 
 function go(id){
-  // Bloquear acceso a secciones personales en modo equipo
-  const personal=['dash','log','patterns','tutorial','sentiment','refinement','tracks'];
+  const personal=['dash','lounge','patterns','tutorial','sentiment','refinement','tracks'];
   if(isTeamMode && personal.includes(id)) return;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes("'"+id+"'")));
   refreshAll();
 }
-function switchT(t){document.getElementById('fl').style.display=t==='l'?'block':'none';document.getElementById('fw').style.display=t==='w'?'block':'none';document.getElementById('tl').classList.toggle('active',t==='l');document.getElementById('tw').classList.toggle('active',t==='w');}
 function switchTut(id){['t1','t2','t3','t4'].forEach(t=>{document.getElementById('tut-'+t+'-c').style.display=t===id?'block':'none';document.getElementById('tut-'+t).classList.toggle('active',t===id);});}
 function switchWarTab(id){
   ['tracks','rivals','players','history'].forEach(t=>{
