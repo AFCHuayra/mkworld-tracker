@@ -537,6 +537,7 @@ tr:hover td{background:rgba(255,255,255,0.012);}
     <button class="tab active" id="wtab-tracks" onclick="switchWarTab('tracks')">Pistas del equipo</button>
     <button class="tab" id="wtab-rivals" onclick="switchWarTab('rivals')">Rivales</button>
     <button class="tab" id="wtab-players" onclick="switchWarTab('players')">Jugadores</button>
+    <button class="tab" id="wtab-rayos" onclick="switchWarTab('rayos')">⚡ Rayos</button>
     <button class="tab" id="wtab-history" onclick="switchWarTab('history')">Historial</button>
   </div>
   <div id="wt-tracks">
@@ -567,7 +568,37 @@ tr:hover td{background:rgba(255,255,255,0.012);}
       </div>
     </div>
   </div>
-  <div id="wt-history" style="display:none;">
+  <div id="wt-rayos" style="display:none;">
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+      <div class="sc"><div class="sl">Total rayos</div><div class="sv" id="rayo-total">0</div></div>
+      <div class="sc"><div class="sl">Nuestros</div><div class="sv sc" id="rayo-nuestros">0</div></div>
+      <div class="sc"><div class="sl">Rivales</div><div class="sv dc" id="rayo-rivales">0</div></div>
+      <div class="sc"><div class="sl">Balance general</div><div class="sv" id="rayo-balance">—</div></div>
+    </div>
+    <!-- Insights coach -->
+    <div class="card" style="border-color:rgba(162,155,254,0.2);background:rgba(162,155,254,0.04);">
+      <div class="ct">Insights de coach — rayos</div>
+      <div id="rayo-insights"></div>
+    </div>
+    <!-- Pistas con/sin rayo -->
+    <div class="card">
+      <div class="ct">Rendimiento por pista — con rayo vs sin rayo</div>
+      <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;">Compara el score del equipo en carreras donde hubo rayo vs carreras limpias. Identifica si el rayo te favorece o perjudica en cada circuito.</div>
+      <div id="rayo-track-compare"></div>
+    </div>
+    <!-- Historial de rayos por jugador -->
+    <div class="card">
+      <div class="ct">Rayos contados por jugador — efecto en resultado</div>
+      <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;">Solo rayos lanzados por nuestro equipo. Score del equipo en esa carrera vs promedio sin rayo nuestro.</div>
+      <div id="rayo-player-stats"></div>
+    </div>
+    <!-- Historial carrera a carrera -->
+    <div class="card">
+      <div class="ct">Historial de carreras con rayo</div>
+      <div id="rayo-history"></div>
+    </div>
+  </div>
     <div class="card">
       <div class="ct">Historial completo de wars</div>
       <div id="wars-list"><div class="empty"><div class="et">Sin wars</div></div></div>
@@ -613,7 +644,10 @@ function initFirebase(){
       fbWars=Object.values(data).sort((a,b)=>a.id-b.id);
       statusEl.className='fb-dot fb-on';
       statusEl.textContent='⬤ Firebase OK';
-      refreshAll();
+      // Auto-refresh wars analytics and history on any change
+      refreshWars();
+      refreshHistory('a');
+      updateSidebar();refreshDash();
     },err=>{
       statusEl.className='fb-dot fb-off';
       statusEl.textContent='⬤ Sin conexión';
@@ -820,6 +854,7 @@ function buildWarRaceGrid(){
   if(!roster.length){container.innerHTML='<div class="empty"><div class="es">Agrega jugadores al roster para ver las carreras.</div></div>';return;}
   container.innerHTML=Array.from({length:12},(_,ri)=>`
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px;">
+      <!-- Header: número + pista + pts equipo -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent3);min-width:22px;">C${ri+1}</div>
         <select id="wr-track-${ri}" style="flex:1;min-width:130px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:4px 7px;outline:none;margin-bottom:0;">
@@ -828,7 +863,8 @@ function buildWarRaceGrid(){
         </select>
         <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);">Eq: <span style="color:var(--accent3);font-weight:700;" id="wrc-pts-${ri}">—</span></div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(${Math.min(6,roster.length)},1fr);gap:5px;">
+      <!-- Posiciones por jugador -->
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(6,roster.length)},1fr);gap:5px;margin-bottom:10px;">
         ${roster.map((name,pi)=>`<div style="text-align:center;">
           <div style="font-size:8px;color:var(--muted);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${name}">${name.split(' ')[0]}</div>
           <select id="wrp-${ri}-${pi}" onchange="updateWarRacePts(${ri})" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;padding:3px 2px;outline:none;margin-bottom:0;-webkit-appearance:none;appearance:none;cursor:pointer;">
@@ -838,7 +874,49 @@ function buildWarRaceGrid(){
           <div id="wrpp-${ri}-${pi}" style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:2px;">0p</div>
         </div>`).join('')}
       </div>
+      <!-- Sección de rayo -->
+      <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:var(--muted2);">⚡ ¿Hubo rayo?</span>
+          <select id="wr-rayo-${ri}" onchange="toggleRayoFields(${ri})" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px 7px;outline:none;margin-bottom:0;width:auto;">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+        <div id="rayo-fields-${ri}" style="display:none;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:var(--muted2);">¿Lanzado por?</span>
+            <select id="wr-rayo-by-${ri}" onchange="toggleRayoOwner(${ri})" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px 7px;outline:none;margin-bottom:0;width:auto;">
+              <option value="nuestro">Nuestro</option>
+              <option value="rival">Rival</option>
+              <option value="ambos">Ambos</option>
+            </select>
+          </div>
+          <div id="rayo-owner-wrap-${ri}" style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:var(--muted2);">¿Quién contó rayo?</span>
+            <select id="wr-rayo-owner-${ri}" style="background:var(--bg2);border:1px solid rgba(162,155,254,0.4);border-radius:6px;color:var(--accent3);font-size:11px;padding:3px 7px;outline:none;margin-bottom:0;width:auto;">
+              <option value="">— Jugador —</option>
+              ${roster.map(n=>`<option value="${n}">${n}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
     </div>`).join('');
+  // Apply initial display state for rayo fields
+  for(let ri=0;ri<12;ri++) toggleRayoFields(ri);
+}
+
+function toggleRayoFields(ri){
+  const val=document.getElementById(`wr-rayo-${ri}`)?.value;
+  const fields=document.getElementById(`rayo-fields-${ri}`);
+  if(fields) fields.style.display=val==='si'?'flex':'none';
+  if(val==='si') toggleRayoOwner(ri);
+}
+
+function toggleRayoOwner(ri){
+  const by=document.getElementById(`wr-rayo-by-${ri}`)?.value;
+  const ownerWrap=document.getElementById(`rayo-owner-wrap-${ri}`);
+  if(ownerWrap) ownerWrap.style.display=(by==='nuestro'||by==='ambos')?'flex':'none';
 }
 
 function updateWarRacePts(ri){
@@ -858,6 +936,10 @@ function clearWRaces(){
   for(let ri=0;ri<12;ri++){
     const tk=document.getElementById(`wr-track-${ri}`);if(tk)tk.value='';
     const pts=document.getElementById(`wrc-pts-${ri}`);if(pts){pts.textContent='—';pts.style.color='var(--muted2)';}
+    const rayo=document.getElementById(`wr-rayo-${ri}`);if(rayo)rayo.value='no';
+    const rayoBy=document.getElementById(`wr-rayo-by-${ri}`);if(rayoBy)rayoBy.value='nuestro';
+    const rayoOwner=document.getElementById(`wr-rayo-owner-${ri}`);if(rayoOwner)rayoOwner.value='';
+    toggleRayoFields(ri);
     for(let pi=0;pi<6;pi++){
       const el=document.getElementById(`wrp-${ri}-${pi}`);if(el)el.value='0';
       const pp=document.getElementById(`wrpp-${ri}-${pi}`);if(pp){pp.textContent='0p';pp.style.color='var(--muted)';}
@@ -882,7 +964,10 @@ function saveWar(){
   const races=Array.from({length:12},(_,ri)=>{
     const track=document.getElementById(`wr-track-${ri}`)?.value||'';
     const playerPositions=roster.map((_,pi)=>parseInt(document.getElementById(`wrp-${ri}-${pi}`)?.value)||0);
-    return{track,playerPositions};
+    const rayo=document.getElementById(`wr-rayo-${ri}`)?.value||'no';
+    const rayoBy=rayo==='si'?(document.getElementById(`wr-rayo-by-${ri}`)?.value||'rival'):'';
+    const rayoOwner=rayo==='si'&&(rayoBy==='nuestro'||rayoBy==='ambos')?(document.getElementById(`wr-rayo-owner-${ri}`)?.value||''):'';
+    return{track,playerPositions,rayo,rayoBy,rayoOwner};
   });
 
   const teamScorePerRace=races.map(r=>r.playerPositions.reduce((s,p)=>s+posToScore(p),0));
@@ -962,7 +1047,7 @@ function go(id){
 }
 function switchTut(id){['t1','t2','t3','t4'].forEach(t=>{document.getElementById('tut-'+t+'-c').style.display=t===id?'block':'none';document.getElementById('tut-'+t).classList.toggle('active',t===id);});}
 function switchWarTab(id){
-  ['tracks','rivals','players','history'].forEach(t=>{
+  ['tracks','rivals','players','rayos','history'].forEach(t=>{
     const el=document.getElementById('wt-'+t);if(el)el.style.display=t===id?'block':'none';
     const btn=document.getElementById('wtab-'+t);if(btn)btn.classList.toggle('active',t===id);
   });
@@ -1251,6 +1336,123 @@ function refreshWars(){
 
   // Render first player chart by default
   renderPlayerChart(playerNames[0]);
+
+  // ── TAB RAYOS ──────────────────────────────────
+  // Collect all race-level rayo data across all wars
+  const rayoRaces=[]; // {warDate,warResult,track,teamPts,rayo,rayoBy,rayoOwner,warId}
+  const allRacesNoRayo=[]; // for baseline comparison
+  wars.forEach(w=>{
+    if(!w.races)return;
+    w.races.forEach((race,ri)=>{
+      const teamPts=w.teamScorePerRace?.[ri]||0;
+      const entry={warDate:w.date,warResult:w.result,track:race.track||'',teamPts,rayo:race.rayo||'no',rayoBy:race.rayoBy||'',rayoOwner:race.rayoOwner||'',us:w.us,them:w.them};
+      if(race.rayo==='si') rayoRaces.push(entry);
+      else allRacesNoRayo.push(entry);
+    });
+  });
+
+  const totalRayos=rayoRaces.length;
+  const rayosNuestros=rayoRaces.filter(r=>r.rayoBy==='nuestro'||r.rayoBy==='ambos').length;
+  const rayosRivales=rayoRaces.filter(r=>r.rayoBy==='rival'||r.rayoBy==='ambos').length;
+  const avgWithRayo=avg(rayoRaces.map(r=>r.teamPts));
+  const avgWithoutRayo=avg(allRacesNoRayo.map(r=>r.teamPts));
+  const balanceNum=avgWithRayo!==null&&avgWithoutRayo!==null?Math.round((avgWithRayo-avgWithoutRayo)*10)/10:null;
+
+  // KPIs
+  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  setEl('rayo-total',totalRayos||'0');
+  setEl('rayo-nuestros',rayosNuestros||'0');
+  setEl('rayo-rivales',rayosRivales||'0');
+  if(balanceNum!==null){
+    const balEl=document.getElementById('rayo-balance');
+    if(balEl){
+      balEl.textContent=(balanceNum>0?'+':'')+balanceNum+' pts';
+      balEl.style.color=balanceNum>0?'var(--success)':balanceNum<0?'var(--danger)':'var(--muted2)';
+    }
+  } else setEl('rayo-balance','—');
+
+  // INSIGHTS COACH
+  const insEl=document.getElementById('rayo-insights');
+  if(insEl){
+    const insights=[];
+    if(totalRayos===0){
+      insights.push({c:'teal',t:'Sin datos de rayo registrados',d:'Registra carreras con datos de rayo para activar este análisis.'});
+    } else {
+      // Balance general
+      if(balanceNum!==null){
+        if(balanceNum>=3) insights.push({c:'success',t:`El rayo favorece al equipo (+${balanceNum} pts/carrera)`,d:`En carreras con rayo el equipo promedia ${avgWithRayo} pts vs ${avgWithoutRayo} pts en carreras limpias. El rayo como herramienta es positivo para el equipo.`});
+        else if(balanceNum<=-3) insights.push({c:'danger',t:`El rayo perjudica al equipo (${balanceNum} pts/carrera)`,d:`En carreras con rayo el equipo promedia ${avgWithRayo} pts vs ${avgWithoutRayo} pts sin rayo. Revisar si el momento de lanzamiento es óptimo o si el rayo del rival genera más daño del que se recupera.`});
+        else insights.push({c:'warn',t:`Rayo neutro — impacto mínimo (${balanceNum>0?'+':''}${balanceNum} pts)`,d:`El rayo no cambia significativamente el resultado de la carrera. Evaluar si vale la pena el riesgo táctico de holdear rayo para timing más preciso.`});
+      }
+      // Nuestros vs rivales
+      if(rayosNuestros>0&&rayosRivales>0){
+        const avgNuestros=avg(rayoRaces.filter(r=>r.rayoBy==='nuestro'||r.rayoBy==='ambos').map(r=>r.teamPts));
+        const avgRivales=avg(rayoRaces.filter(r=>r.rayoBy==='rival').map(r=>r.teamPts));
+        if(avgRivales!==null&&avgNuestros!==null){
+          const diff=Math.round((avgNuestros-avgRivales)*10)/10;
+          if(diff>3) insights.push({c:'success',t:'Nuestro rayo supera al rayo rival',d:`Cuando usamos rayo: ${avgNuestros} pts avg. Cuando el rival usa rayo: ${avgRivales} pts avg. Diferencia de +${diff} a nuestro favor. El equipo maneja bien la recuperación post-rayo.`});
+          else if(diff<-3) insights.push({c:'danger',t:'El rayo rival nos afecta más que el nuestro',d:`Cuando el rival usa rayo: ${avgRivales} pts avg. Cuando usamos nuestro: ${avgNuestros} pts. El equipo pierde más posiciones bajo rayo rival. Trabajar en timing de recuperación post-rayo.`});
+        }
+      }
+      // Frecuencia
+      const totalRaces=wars.reduce((s,w)=>s+(w.races?.length||0),0);
+      if(totalRaces>0){
+        const rayoFreq=Math.round((totalRayos/totalRaces)*100);
+        if(rayoFreq>=50) insights.push({c:'warn',t:`Rayo en ${rayoFreq}% de las carreras — alta frecuencia`,d:'El rayo está presente en más de la mitad de las carreras. Dato relevante para el draft de pistas — priorizar circuitos donde el equipo se recupera mejor.'});
+      }
+    }
+    insEl.innerHTML=insights.map(i=>`<div class="adv" style="background:rgba(${advRgb(i.c)},0.07);border:1px solid rgba(${advRgb(i.c)},0.2);margin-bottom:8px;"><div class="adv-t" style="color:rgb(${advRgb(i.c)});">${i.t}</div><div class="adv-b">${i.d}</div></div>`).join('');
+  }
+
+  // PISTAS CON/SIN RAYO
+  const rtcEl=document.getElementById('rayo-track-compare');
+  if(rtcEl){
+    const trackRayo={};
+    rayoRaces.forEach(r=>{if(!r.track)return;if(!trackRayo[r.track])trackRayo[r.track]={withRayo:[],noRayo:[]};trackRayo[r.track].withRayo.push(r.teamPts);});
+    allRacesNoRayo.forEach(r=>{if(!r.track)return;if(!trackRayo[r.track])trackRayo[r.track]={withRayo:[],noRayo:[]};trackRayo[r.track].noRayo.push(r.teamPts);});
+    const trackEntries=Object.entries(trackRayo).filter(([,d])=>d.withRayo.length>0).map(([t,d])=>{
+      const wr=avg(d.withRayo);const nr=avg(d.noRayo);const diff=nr!==null?Math.round((wr-nr)*10)/10:null;
+      return{t,wr,nr,diff,count:d.withRayo.length};
+    }).sort((a,b)=>(b.diff||0)-(a.diff||0));
+    if(!trackEntries.length){rtcEl.innerHTML='<div class="empty"><div class="es">Sin datos suficientes. Registra pistas en las carreras.</div></div>';}
+    else{rtcEl.innerHTML=`<table><thead><tr><th>Pista</th><th>Con rayo</th><th>Sin rayo</th><th>Diferencia</th><th>Veces</th><th>Insight</th></tr></thead><tbody>${trackEntries.map(x=>{
+      const col=x.diff>2?'var(--success)':x.diff<-2?'var(--danger)':'var(--muted2)';
+      const insight=x.diff>2?'✓ Favorable':x.diff<-2?'⚠ Perjudicial':'≈ Neutro';
+      return`<tr><td style="font-size:11px;">${x.t}</td><td style="font-family:var(--mono);font-size:10px;color:var(--accent3);">${x.wr??'—'}</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted2);">${x.nr??'—'}</td><td style="font-family:var(--mono);font-size:11px;font-weight:700;color:${col};">${x.diff!==null?(x.diff>0?'+':'')+x.diff:'—'}</td><td style="font-family:var(--mono);font-size:10px;color:var(--muted);">${x.count}</td><td style="font-size:10px;color:${col};">${insight}</td></tr>`;
+    }).join('')}</tbody></table>`;}
+  }
+
+  // RAYOS POR JUGADOR
+  const rpEl=document.getElementById('rayo-player-stats');
+  if(rpEl){
+    const playerRayo={};
+    rayoRaces.filter(r=>r.rayoOwner&&(r.rayoBy==='nuestro'||r.rayoBy==='ambos')).forEach(r=>{
+      if(!playerRayo[r.rayoOwner])playerRayo[r.rayoOwner]={races:[],wins:0};
+      playerRayo[r.rayoOwner].races.push(r);
+      if(r.teamPts>42)playerRayo[r.rayoOwner].wins++;
+    });
+    const playerEntries=Object.entries(playerRayo).sort((a,b)=>b[1].races.length-a[1].races.length);
+    if(!playerEntries.length){rpEl.innerHTML='<div class="empty"><div class="es">Sin rayos propios registrados con jugador identificado.</div></div>';}
+    else{rpEl.innerHTML=`<table><thead><tr><th>Jugador</th><th>Rayos</th><th>Pts eq. avg</th><th>Favorable (&gt;42)</th><th>Balance</th></tr></thead><tbody>${playerEntries.map(([name,data])=>{
+      const avgPts=avg(data.races.map(r=>r.teamPts));
+      const favPct=pct(data.wins,data.races.length);
+      const bal=avgPts!==null?Math.round((avgPts-42)*10)/10:null;
+      const balCol=bal>0?'var(--success)':bal<0?'var(--danger)':'var(--muted2)';
+      return`<tr><td style="font-size:11px;font-weight:600;">${name}</td><td style="font-family:var(--mono);">${data.races.length}</td><td style="font-family:var(--mono);color:var(--accent3);">${avgPts??'—'}</td><td style="font-family:var(--mono);color:${favPct>=60?'var(--success)':'var(--warn)'};">${favPct}%</td><td style="font-family:var(--mono);font-weight:700;color:${balCol};">${bal!==null?(bal>0?'+':'')+bal+' pts':'—'}</td></tr>`;
+    }).join('')}</tbody></table>`;}
+  }
+
+  // HISTORIAL RAYOS
+  const rhEl=document.getElementById('rayo-history');
+  if(rhEl){
+    if(!rayoRaces.length){rhEl.innerHTML='<div class="empty"><div class="et">Sin rayos registrados</div></div>';}
+    else{rhEl.innerHTML=`<table><thead><tr><th>War</th><th>Pista</th><th>Lanzado por</th><th>Quién</th><th>Pts equipo</th><th>Balance</th></tr></thead><tbody>${[...rayoRaces].reverse().map(r=>{
+      const bal=r.teamPts-42;const balCol=bal>0?'var(--success)':bal<0?'var(--danger)':'var(--muted2)';
+      const byLabel=r.rayoBy==='nuestro'?'Nuestro ⚡':r.rayoBy==='rival'?'Rival ⚡':'Ambos ⚡';
+      const byCol=r.rayoBy==='nuestro'?'var(--accent3)':r.rayoBy==='rival'?'var(--danger)':'var(--warn)';
+      return`<tr><td style="font-family:var(--mono);font-size:9px;color:var(--muted);">${r.warDate}</td><td style="font-size:10px;">${r.track||'—'}</td><td style="font-size:10px;color:${byCol};font-weight:600;">${byLabel}</td><td style="font-size:10px;color:var(--accent3);">${r.rayoOwner||'—'}</td><td style="font-family:var(--mono);">${r.teamPts}</td><td style="font-family:var(--mono);font-weight:700;color:${balCol};">${bal>0?'+':''}${bal}</td></tr>`;
+    }).join('')}</tbody></table>`;}
+  }
 
   // TAB HISTORY
   const wlEl=document.getElementById('wars-list');
