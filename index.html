@@ -716,12 +716,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div><label>División del rival</label>
         <select id="edit-rival">
           <option value="">— División —</option>
-          ${Array.from({length:20},(_,i)=>`<option value="División ${i+1}">División ${i+1}</option>`).join('')}
+          <option value="División 1">División 1</option>
+          <option value="División 2">División 2</option>
+          <option value="División 3">División 3</option>
+          <option value="División 4">División 4</option>
+          <option value="División 5">División 5</option>
+          <option value="División 6">División 6</option>
+          <option value="División 7">División 7</option>
+          <option value="División 8">División 8</option>
+          <option value="División 9">División 9</option>
+          <option value="División 10">División 10</option>
+          <option value="División 11">División 11</option>
+          <option value="División 12">División 12</option>
+          <option value="División 13">División 13</option>
+          <option value="División 14">División 14</option>
+          <option value="División 15">División 15</option>
+          <option value="División 16">División 16</option>
+          <option value="División 17">División 17</option>
+          <option value="División 18">División 18</option>
+          <option value="División 19">División 19</option>
+          <option value="División 20">División 20</option>
         </select>
       </div>
       <div><label>Puntos nuestro equipo</label><input type="number" id="edit-us" oninput="autoEditResult()"></div>
       <div><label>Puntos rival</label><input type="number" id="edit-them" oninput="autoEditResult()"></div>
-      <div><label>Resultado</label><select id="edit-result"><option value="win">Victoria</option><option value="loss">Derrota</option><option value="tie">Empate</option></select></div>
+      <div>
+        <label>Resultado <span id="edit-result-auto" style="font-family:var(--mono);font-size:8px;color:var(--accent2);margin-left:4px;">(auto)</span></label>
+        <select id="edit-result"><option value="win">Victoria</option><option value="loss">Derrota</option><option value="tie">Empate</option></select>
+      </div>
     </div>
     <label>Notas tácticas</label>
     <textarea id="edit-notes" style="min-height:80px;"></textarea>
@@ -1420,6 +1442,17 @@ function filterWarsByRange(wars){
 // ════════════════════════════════════════
 // EDIT / DELETE WAR
 // ════════════════════════════════════════
+function autoEditResult(){
+  const us=parseInt(document.getElementById('edit-us')?.value)||0;
+  const them=parseInt(document.getElementById('edit-them')?.value)||0;
+  const sel=document.getElementById('edit-result');
+  if(us>0||them>0){
+    if(us>them) sel.value='win';
+    else if(them>us) sel.value='loss';
+    else sel.value='tie';
+  }
+}
+
 function openEditModal(warId){
   const war=fbWars.find(w=>String(w.id)===String(warId));
   if(!war){alert('War no encontrada.');return;}
@@ -1431,7 +1464,6 @@ function openEditModal(warId){
   document.getElementById('edit-us').value=war.us||'';
   document.getElementById('edit-them').value=war.them||'';
   document.getElementById('edit-result').value=war.result||'win';
-  document.getElementById('edit-mmr').value=war.mmr||'';
   document.getElementById('edit-notes').value=war.notes||'';
   document.getElementById('edit-status').textContent='';
   document.getElementById('edit-modal').style.display='flex';
@@ -1638,12 +1670,23 @@ function refreshWars(){
     if(!w.races||!w.roster)return;
     w.roster.forEach((name,pi)=>{
       if(!name)return;
-      if(!playerMap[name])playerMap[name]={tracks:{},total:0,races:0,warScores:[]};
+      if(!playerMap[name])playerMap[name]={tracks:{},trackPos:{},total:0,races:0,warScores:[]};
       let warPts=0;
       w.races.forEach(race=>{
-        const t=race.track;const pos=race.playerPositions?.[pi]||0;const sc=posToScore(pos);
-        playerMap[name].total+=sc;playerMap[name].races++;warPts+=sc;
-        if(t){if(!playerMap[name].tracks[t])playerMap[name].tracks[t]=[];playerMap[name].tracks[t].push(sc);}
+        const t=race.track;
+        const pos=race.playerPositions?.[pi]||0;
+        const sc=posToScore(pos);
+        playerMap[name].total+=sc;
+        playerMap[name].races++;
+        warPts+=sc;
+        if(t){
+          if(!playerMap[name].tracks[t])playerMap[name].tracks[t]=[];
+          playerMap[name].tracks[t].push(sc);
+          if(pos>0){
+            if(!playerMap[name].trackPos[t])playerMap[name].trackPos[t]=[];
+            playerMap[name].trackPos[t].push(pos);
+          }
+        }
       });
       playerMap[name].warScores.push({date:w.date,score:warPts,result:w.result});
     });
@@ -1665,27 +1708,96 @@ function refreshWars(){
   // Store globally for chart rendering
   window._playerMap=playerMap;
   window._playerNames=playerNames;
+  window._allWars=wars; // for temporal chart access
 
   if(fbEl){
     fbEl.innerHTML=playerNames.map((n,i)=>`<button onclick="renderPlayerChart('${n}')" id="pb-${n.replace(/\s/g,'_')}" class="tab${i===0?' active':''}" style="font-size:10px;">${n}</button>`).join('');
   }
 
-  // Render table summary
+  // Helper: round half-up (0.4999→floor, 0.5000→ceil)
+  const roundHU=x=>Math.abs(x%1)>=0.5?Math.ceil(x):Math.floor(x);
+
+  // Temporal average helper
+  function temporalAvg(warScores, days){
+    if(!days) return null; // 'all' mode — return null to indicate use full avg
+    const cutoff=new Date(Date.now()-days*24*60*60*1000);
+    const filtered=warScores.filter(ws=>{
+      if(!ws.date) return false;
+      const parts=ws.date.includes('/')?ws.date.split('/').reverse().join('-'):ws.date;
+      const d=new Date(parts);return!isNaN(d)&&d>=cutoff;
+    });
+    if(!filtered.length) return null;
+    return Math.round((filtered.reduce((s,ws)=>s+ws.score,0)/filtered.length)*10)/10;
+  }
+
+  // Render table summary with temporal averages and avg position per track
   if(ptEl){
     ptEl.innerHTML=playerNames.map(name=>{
       const data=playerMap[name];
       const avgSc=data.races?Math.round((data.total/data.races)*10)/10:0;
-      const top=Object.entries(data.tracks).map(([t,arr])=>({t,a:avg(arr),c:arr.length})).sort((a,b)=>b.a-a.a);
-      const best3=top.slice(0,3);const worst3=[...top].sort((a,b)=>a.a-b.a).slice(0,3);
-      return`<div style="border-bottom:1px solid var(--border);padding:10px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${name}</div>
+      const top=Object.entries(data.tracks).map(([t,arr])=>{
+        const positions=data.trackPos[t]||[];
+        const avgPos=positions.length?roundHU(positions.reduce((a,b)=>a+b,0)/positions.length):null;
+        return{t,a:avg(arr),c:arr.length,avgPos};
+      }).sort((a,b)=>b.a-a.a);
+      const best3=top.slice(0,3);
+      const worst3=[...top].sort((a,b)=>a.a-b.a).slice(0,3);
+
+      // Temporal averages
+      const t7=temporalAvg(data.warScores,7);
+      const t14=temporalAvg(data.warScores,14);
+      const t30=temporalAvg(data.warScores,30);
+      const t90=temporalAvg(data.warScores,90);
+      const tAll=Math.round((data.warScores.reduce((s,ws)=>s+ws.score,0)/Math.max(1,data.warScores.length))*10)/10;
+
+      const trendCol=(recent,baseline)=>recent===null?'var(--muted2)':recent>baseline?'var(--success)':recent<baseline?'var(--danger)':'var(--muted2)';
+
+      return`<div style="border-bottom:1px solid var(--border);padding:12px 0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${name}</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--accent3);">${avgSc} pts/carrera</div>
           <div style="font-size:9px;color:var(--muted);">${data.races} carreras · ${data.warScores.length} wars</div>
         </div>
+
+        <!-- Temporal averages -->
+        <div style="background:var(--bg3);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Promedio de score por war — evolución temporal</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            ${[
+              {label:'7d',val:t7},
+              {label:'14d',val:t14},
+              {label:'1 mes',val:t30},
+              {label:'3 meses',val:t90},
+              {label:'Total',val:tAll}
+            ].map(({label,val})=>{
+              const col=val===null?'var(--muted)':trendCol(val,tAll);
+              const display=val===null?'—':val;
+              return`<div style="text-align:center;min-width:44px;">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);margin-bottom:2px;">${label}</div>
+                <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${col};">${display}</div>
+              </div>`;
+            }).join('<div style="width:1px;background:var(--border);height:28px;align-self:center;"></div>')}
+          </div>
+        </div>
+
+        <!-- Best/worst tracks with avg position -->
         ${top.length?`<div style="display:flex;gap:14px;flex-wrap:wrap;">
-          <div><div style="font-size:9px;color:var(--success);margin-bottom:3px;font-family:var(--mono);">TOP 3 MEJORES</div>${best3.map(x=>`<span class="tag tgr">${x.t} <span style="opacity:0.7;">(${x.a}p)</span></span>`).join('')}</div>
-          <div><div style="font-size:9px;color:var(--danger);margin-bottom:3px;font-family:var(--mono);">TOP 3 A MEJORAR</div>${worst3.map(x=>`<span class="tag tr">${x.t} <span style="opacity:0.7;">(${x.a}p)</span></span>`).join('')}</div>
+          <div>
+            <div style="font-size:9px;color:var(--success);margin-bottom:4px;font-family:var(--mono);letter-spacing:0.08em;">TOP 3 MEJORES</div>
+            ${best3.map(x=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+              <span class="tag tgr" style="flex:1;">${x.t}</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--success);">${x.a}p</span>
+              ${x.avgPos!==null?`<span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">~${x.avgPos}°</span>`:''}
+            </div>`).join('')}
+          </div>
+          <div>
+            <div style="font-size:9px;color:var(--danger);margin-bottom:4px;font-family:var(--mono);letter-spacing:0.08em;">TOP 3 A MEJORAR</div>
+            ${worst3.map(x=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+              <span class="tag tr" style="flex:1;">${x.t}</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--danger);">${x.a}p</span>
+              ${x.avgPos!==null?`<span style="font-family:var(--mono);font-size:9px;color:var(--muted2);">~${x.avgPos}°</span>`:''}
+            </div>`).join('')}
+          </div>
         </div>`:''}
       </div>`;
     }).join('');
@@ -1832,13 +1944,14 @@ function refreshWars(){
 // ════════════════════════════════════════
 // PLAYER INTERACTIVE CHART
 // ════════════════════════════════════════
+const roundHalfUp=x=>Math.abs(x%1)>=0.5?Math.ceil(x):Math.floor(x);
+
 function renderPlayerChart(name){
   const playerMap=window._playerMap||{};
   const playerNames=window._playerNames||[];
   const data=playerMap[name];
   if(!data) return;
 
-  // Update active filter button
   playerNames.forEach(n=>{
     const btn=document.getElementById('pb-'+n.replace(/\s/g,'_'));
     if(btn) btn.classList.toggle('active',n===name);
@@ -1848,59 +1961,64 @@ function renderPlayerChart(name){
   if(!chartEl) return;
 
   const avgSc=data.races?Math.round((data.total/data.races)*10)/10:0;
-  const trackData=Object.entries(data.tracks)
-    .map(([t,arr])=>({t,a:avg(arr),c:arr.length}))
-    .sort((a,b)=>b.a-a.a);
+  const trackData=Object.entries(data.tracks).map(([t,arr])=>{
+    const positions=(data.trackPos||{})[t]||[];
+    const avgPos=positions.length?roundHalfUp(positions.reduce((a,b)=>a+b,0)/positions.length):null;
+    return{t,a:avg(arr),c:arr.length,avgPos};
+  }).sort((a,b)=>b.a-a.a);
 
-  // War score trend
   const warScores=data.warScores||[];
   const maxWarScore=Math.max(...warScores.map(w=>w.score),1);
+  const avgWar=warScores.length?Math.round((warScores.reduce((s,w)=>s+w.score,0)/warScores.length)*10)/10:0;
 
   chartEl.innerHTML=`
-    <!-- Stats summary -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
       <div class="sc"><div class="sl">Pts/carrera avg</div><div class="sv ac">${avgSc}</div></div>
-      <div class="sc"><div class="sl">Carreras totales</div><div class="sv">${data.races}</div></div>
+      <div class="sc"><div class="sl">Score/war avg</div><div class="sv ac">${avgWar}</div></div>
       <div class="sc"><div class="sl">Wars jugadas</div><div class="sv">${warScores.length}</div></div>
-      <div class="sc"><div class="sl">Pts totales</div><div class="sv">${data.total}</div></div>
+      <div class="sc"><div class="sl">Carreras totales</div><div class="sv">${data.races}</div></div>
     </div>
 
-    <!-- War score trend -->
     ${warScores.length?`
     <div style="margin-bottom:14px;">
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Score por war</div>
-      <div style="display:flex;align-items:flex-end;gap:4px;height:60px;background:var(--bg3);border-radius:8px;padding:8px 10px;">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Score por war — verde=victoria · rojo=derrota</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:68px;background:var(--bg3);border-radius:8px;padding:10px 10px 8px;">
         ${warScores.map(w=>{
-          const h=Math.max(6,Math.round((w.score/maxWarScore)*44));
+          const h=Math.max(6,Math.round((w.score/maxWarScore)*48));
           const col=w.result==='win'?'var(--success)':w.result==='loss'?'var(--danger)':'var(--warn)';
-          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;" title="${w.date}: ${w.score} pts (${w.result==='win'?'Victoria':w.result==='loss'?'Derrota':'Empate'})">
             <div style="font-family:var(--mono);font-size:7px;color:var(--muted);">${w.score}</div>
-            <div style="width:100%;height:${h}px;background:${col};border-radius:2px 2px 0 0;opacity:0.85;min-width:8px;cursor:default;" title="${w.date}: ${w.score} pts (${w.result})"></div>
+            <div style="width:100%;height:${h}px;background:${col};border-radius:2px 2px 0 0;opacity:0.82;min-width:7px;"></div>
           </div>`;
         }).join('')}
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:var(--mono);font-size:8px;color:var(--muted);">
-        <span>más antiguo</span><span>más reciente</span>
+        <span>más antiguo</span><span style="color:var(--accent3);">avg ${avgWar}</span><span>más reciente</span>
       </div>
     </div>`:''}
 
-    <!-- Track performance horizontal bars -->
     ${trackData.length?`
     <div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Rendimiento por pista (pts avg · hover para detalles)</div>
-      <div style="max-height:280px;overflow-y:auto;padding-right:4px;">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Rendimiento por pista — pts avg + posición avg</div>
+      <div style="max-height:300px;overflow-y:auto;padding-right:4px;">
         ${trackData.map(x=>{
           const col=x.a>=12?'var(--success)':x.a>=9?'var(--accent3)':x.a>=7?'var(--warn)':x.a>=5?'var(--muted2)':'var(--danger)';
           const barW=Math.round((x.a/15)*100);
-          return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;" title="${x.t}: ${x.a} pts avg en ${x.c} carreras">
-            <div style="width:130px;font-size:10px;color:var(--text);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${x.t}">${x.t}</div>
+          const posLabel=x.avgPos!==null?`${x.avgPos}°`:'—';
+          const posCol=x.avgPos!==null?(x.avgPos<=3?'var(--success)':x.avgPos<=6?'var(--accent3)':x.avgPos<=9?'var(--warn)':'var(--danger)'):'var(--muted)';
+          return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;" title="${x.t}: ${x.a} pts avg · pos avg ${posLabel} en ${x.c} carreras">
+            <div style="width:120px;font-size:10px;color:var(--text);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${x.t}</div>
             <div style="flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;">
-              <div style="height:100%;width:${barW}%;background:${col};border-radius:4px;transition:width 0.4s ease;"></div>
+              <div style="height:100%;width:${barW}%;background:${col};border-radius:4px;transition:width 0.4s;"></div>
             </div>
-            <div style="font-family:var(--mono);font-size:10px;color:${col};width:32px;text-align:right;">${x.a}p</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--muted);width:20px;">${x.c}×</div>
+            <div style="font-family:var(--mono);font-size:10px;color:${col};width:28px;text-align:right;">${x.a}p</div>
+            <div style="font-family:var(--mono);font-size:10px;color:${posCol};width:24px;text-align:right;" title="Posición promedio">${posLabel}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--muted);width:18px;">${x.c}×</div>
           </div>`;
         }).join('')}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:6px;font-family:var(--mono);font-size:8px;color:var(--muted2);">
+        <span>pts = puntos promedio por carrera</span><span>N° = posición promedio (entero más cercano)</span>
       </div>
     </div>`:'<div class="empty"><div class="es">Sin datos de pistas para este jugador.</div></div>'}
   `;
