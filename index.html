@@ -163,6 +163,13 @@ tr:hover td{background:rgba(255,255,255,0.012);}
 .vz{color:var(--muted2);font-family:var(--mono);font-size:11px;}
 .rival-card{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;}
 .rival-card:hover{border-color:var(--border2);}
+/* ── MODO PERSONAL / EQUIPO ── */
+.personal-only{transition:opacity 0.2s;}
+.team-mode .personal-only{opacity:0.25;pointer-events:none;}
+.team-mode .personal-only .nb{cursor:default;}
+.mode-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;padding:3px 8px;border-radius:10px;cursor:pointer;margin-top:5px;transition:all 0.2s;}
+.mode-personal{background:rgba(108,92,231,0.2);color:var(--accent3);border:1px solid rgba(108,92,231,0.3);}
+.mode-team{background:rgba(0,206,201,0.15);color:var(--accent2);border:1px solid rgba(0,206,201,0.25);}
 #races-grid-l select{-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;cursor:pointer;font-weight:700;}
 @keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}.pulse{animation:pulse 1.4s ease-in-out infinite;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.fadein{animation:fadeIn 0.3s ease forwards;}
@@ -178,13 +185,14 @@ tr:hover td{background:rgba(255,255,255,0.012);}
     <div class="brand-name">MKW</div>
     <div class="brand-sub">Sistema de dominio</div>
     <div id="fb-status" class="fb-dot fb-off">⬤ Conectando...</div>
+    <div id="mode-badge" class="mode-badge mode-personal" onclick="toggleMode()">★ Modo personal</div>
   </div>
-  <div class="nav-sec">
+  <div class="nav-sec personal-only">
     <div class="nav-lbl">Personal</div>
     <button class="nb active" onclick="go('dash')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1.5" fill="currentColor" opacity=".5"/><rect x="1" y="8" width="5" height="5" rx="1.5" fill="currentColor" opacity=".5"/><rect x="8" y="8" width="5" height="5" rx="1.5" fill="currentColor"/></svg>Dashboard</button>
     <button class="nb" onclick="go('log')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4.5v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Registrar</button>
   </div>
-  <div class="nav-sec" style="margin-top:6px;">
+  <div class="nav-sec personal-only" style="margin-top:6px;">
     <div class="nav-lbl">Análisis personal</div>
     <button class="nb" onclick="go('patterns')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M2 11L5 7l2.5 2.5L10 5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Patrones<span class="nb-badge" id="pat-count">0</span></button>
     <button class="nb" onclick="go('tutorial')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M3 3h8M3 7h5M3 10h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Tutorial élite</button>
@@ -197,9 +205,9 @@ tr:hover td{background:rgba(255,255,255,0.012);}
     <button class="nb" onclick="go('wars')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L8.5 5.5H12.5L9.5 7.8l1.2 4-3.7-2.6L3.3 11.8l1.2-4L1.5 5.5h4L7 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>Wars 6v6</button>
     <button class="nb" onclick="go('history')"><svg class="nb-ico" viewBox="0 0 14 14" fill="none"><rect x="2" y="2.5" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 5.5h4M5 8h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Historial</button>
   </div>
-  <div style="margin-top:auto;padding:10px 12px 0;border-top:1px solid var(--border);">
+  <div class="personal-only" style="margin-top:auto;padding:10px 12px 0;border-top:1px solid var(--border);">
     <div style="font-family:var(--mono);font-size:8px;color:var(--muted);margin-bottom:3px;">MICHELL MERCADO</div>
-    <div id="sidebar-mmr" style="font-family:var(--display);font-size:14px;font-weight:800;color:var(--accent3);">5,368</div>
+    <div id="sidebar-mmr" style="font-family:var(--display);font-size:14px;font-weight:800;color:var(--accent3);">5,308</div>
     <div id="sidebar-rank" style="font-size:9px;color:var(--muted2);margin-top:1px;">Silver · Tier CD</div>
   </div>
 </aside>
@@ -336,13 +344,14 @@ tr:hover td{background:rgba(255,255,255,0.012);}
 
     <div class="card">
       <div class="ct">Roster del war</div>
+      <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;">Selecciona desde el pool. Solo aparecen jugadores activos.</div>
       <div id="roster-inputs" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div><label>Jugador 1</label><input type="text" id="p0" placeholder="Nombre"></div>
-        <div><label>Jugador 2</label><input type="text" id="p1" placeholder="Nombre"></div>
-        <div><label>Jugador 3</label><input type="text" id="p2" placeholder="Nombre"></div>
-        <div><label>Jugador 4</label><input type="text" id="p3" placeholder="Nombre"></div>
-        <div><label>Jugador 5</label><input type="text" id="p4" placeholder="Nombre"></div>
-        <div><label>Jugador 6</label><input type="text" id="p5" placeholder="Nombre"></div>
+        <div><label>Jugador 1</label><select id="p0" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+        <div><label>Jugador 2</label><select id="p1" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+        <div><label>Jugador 3</label><select id="p2" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+        <div><label>Jugador 4</label><select id="p3" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+        <div><label>Jugador 5</label><select id="p4" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
+        <div><label>Jugador 6</label><select id="p5" onchange="buildWarRaceGrid()"><option value="">— Seleccionar —</option></select></div>
       </div>
       <button class="btn bg" style="font-size:10px;padding:4px 10px;" onclick="clearRosterSlots()">Limpiar slots</button>
     </div>
@@ -552,7 +561,12 @@ tr:hover td{background:rgba(255,255,255,0.012);}
   <div id="wt-players" style="display:none;">
     <div class="card">
       <div class="ct">Rendimiento histórico por jugador</div>
-      <div id="player-track-stats"><div class="empty"><div class="et">Sin datos</div></div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="player-filter-btns"></div>
+      <div id="player-chart-area"></div>
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px;">
+        <div class="ct">Tabla resumen</div>
+        <div id="player-track-stats"></div>
+      </div>
     </div>
   </div>
   <div id="wt-history" style="display:none;">
@@ -784,6 +798,7 @@ function renderPool(){
   const pi=document.getElementById('pool-inactive');
   if(pl) pl.innerHTML=pool.active.map(n=>`<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,206,201,0.1);border:1px solid rgba(0,206,201,0.2);border-radius:20px;padding:3px 9px;"><span style="font-size:11px;color:var(--accent2);cursor:pointer;" onclick="insertToRoster('${n}')">${n}</span><span style="font-size:10px;color:var(--muted);cursor:pointer;" onclick="moveToInactive('${n}')">×</span></div>`).join('')||'<span style="font-size:10px;color:var(--muted);">Sin jugadores activos</span>';
   if(pi) pi.innerHTML=pool.inactive.map(n=>`<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:3px 9px;"><span style="font-size:11px;color:var(--muted2);cursor:pointer;" onclick="moveToActive('${n}')" title="Reactivar">${n}</span></div>`).join('')||'<span style="font-size:10px;color:var(--muted);">Sin inactivos</span>';
+  populateRosterDropdowns();
 }
 
 // ════════════════════════════════════════
@@ -791,6 +806,15 @@ function renderPool(){
 // ════════════════════════════════════════
 function getWarRoster(){return Array.from({length:6},(_,i)=>document.getElementById('p'+i)?.value.trim()||'').filter(Boolean);}
 function clearRosterSlots(){for(let i=0;i<6;i++){const el=document.getElementById('p'+i);if(el)el.value='';}buildWarRaceGrid();}
+
+function populateRosterDropdowns(){
+  const pool=loadPool();
+  const opts='<option value="">— Seleccionar —</option>'+pool.active.map(n=>`<option value="${n}">${n}</option>`).join('');
+  for(let i=0;i<6;i++){
+    const sel=document.getElementById('p'+i);
+    if(sel){const cur=sel.value;sel.innerHTML=opts;if(cur)sel.value=cur;}
+  }
+}
 
 function buildWarRaceGrid(){
   const container=document.getElementById('war-races-container');if(!container)return;
@@ -844,7 +868,7 @@ function clearWRaces(){
 }
 
 setTimeout(()=>{
-  document.querySelectorAll('#roster-inputs input').forEach(inp=>inp.addEventListener('input',()=>{buildWarRaceGrid();}));
+  populateRosterDropdowns();
   buildWarRaceGrid();
 },150);
 
@@ -902,9 +926,41 @@ function resetW(){
 }
 
 // ════════════════════════════════════════
-// NAV
+// NAV + MODO PERSONAL/EQUIPO
 // ════════════════════════════════════════
+let isTeamMode = false;
+const TEAM_PIN = '1987'; // PIN para acceder al modo personal desde modo equipo
+
+function toggleMode(){
+  if(!isTeamMode){
+    // Pasar a modo equipo
+    isTeamMode = true;
+    document.querySelector('.shell').classList.add('team-mode');
+    document.getElementById('mode-badge').className='mode-badge mode-team';
+    document.getElementById('mode-badge').textContent='⬡ Modo equipo';
+    // Si está en sección personal, redirigir a wars
+    const activePage=document.querySelector('.page.active')?.id;
+    if(['page-dash','page-log','page-patterns','page-tutorial','page-sentiment','page-refinement','page-tracks'].includes(activePage)){
+      go('wars');
+    }
+  } else {
+    // Volver a modo personal con PIN
+    const pin=prompt('PIN de acceso personal:');
+    if(pin===TEAM_PIN){
+      isTeamMode=false;
+      document.querySelector('.shell').classList.remove('team-mode');
+      document.getElementById('mode-badge').className='mode-badge mode-personal';
+      document.getElementById('mode-badge').textContent='★ Modo personal';
+    } else if(pin!==null){
+      alert('PIN incorrecto.');
+    }
+  }
+}
+
 function go(id){
+  // Bloquear acceso a secciones personales en modo equipo
+  const personal=['dash','log','patterns','tutorial','sentiment','refinement','tracks'];
+  if(isTeamMode && personal.includes(id)) return;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes("'"+id+"'")));
@@ -943,7 +999,7 @@ function refreshAll(){
 // SIDEBAR
 // ════════════════════════════════════════
 function updateSidebar(){
-  const BASE=5368;const mmrs=db.ev.map(e=>e.mmr);
+  const BASE=5308;const mmrs=db.ev.map(e=>e.mmr);
   const cumMMR=BASE+mmrs.reduce((a,b)=>a+b,0);
   const tier=mmrToTier(cumMMR);const rank=mmrToRank(cumMMR);
   document.getElementById('sidebar-mmr').textContent=cumMMR.toLocaleString();
@@ -954,7 +1010,7 @@ function updateSidebar(){
 // DASHBOARD
 // ════════════════════════════════════════
 function refreshDash(){
-  const BASE=5368;const all=db.ev;
+  const BASE=5308;const all=db.ev;
   const scores=all.map(e=>e.score).filter(s=>s>0);
   const mmrs=all.map(e=>e.mmr);
   const cumMMR=BASE+mmrs.reduce((a,b)=>a+b,0);
@@ -1141,39 +1197,67 @@ function refreshWars(){
     </div>`;
   }).join('');}
 
-  // TAB PLAYERS
+  // TAB PLAYERS — build playerMap for charts and table
   const playerMap={};
   wars.forEach(w=>{
     if(!w.races||!w.roster)return;
     w.roster.forEach((name,pi)=>{
       if(!name)return;
-      if(!playerMap[name])playerMap[name]={tracks:{},total:0,races:0};
+      if(!playerMap[name])playerMap[name]={tracks:{},total:0,races:0,warScores:[]};
+      let warPts=0;
       w.races.forEach(race=>{
         const t=race.track;const pos=race.playerPositions?.[pi]||0;const sc=posToScore(pos);
-        playerMap[name].total+=sc;playerMap[name].races++;
+        playerMap[name].total+=sc;playerMap[name].races++;warPts+=sc;
         if(t){if(!playerMap[name].tracks[t])playerMap[name].tracks[t]=[];playerMap[name].tracks[t].push(sc);}
       });
+      playerMap[name].warScores.push({date:w.date,score:warPts,result:w.result});
     });
   });
+
+  // Render player filter buttons and default to first player
+  const playerNames=Object.keys(playerMap).sort((a,b)=>(playerMap[b].total/Math.max(1,playerMap[b].races))-(playerMap[a].total/Math.max(1,playerMap[a].races)));
+  const fbEl=document.getElementById('player-filter-btns');
+  const chartEl=document.getElementById('player-chart-area');
   const ptEl=document.getElementById('player-track-stats');
-  const players=Object.entries(playerMap);
-  if(!players.length){ptEl.innerHTML='<div class="empty"><div class="et">Sin datos</div><div class="es">Registra wars con roster y posiciones.</div></div>';}
-  else{ptEl.innerHTML=players.sort((a,b)=>(b[1].total/Math.max(1,b[1].races))-(a[1].total/Math.max(1,a[1].races))).map(([name,data])=>{
-    const avgSc=data.races?Math.round((data.total/data.races)*10)/10:0;
-    const top=Object.entries(data.tracks).map(([t,arr])=>({t,a:avg(arr),c:arr.length})).sort((a,b)=>b.a-a.a);
-    const best3=top.slice(0,3);const worst3=top.slice(-3).reverse();
-    return`<div style="border-bottom:1px solid var(--border);padding:10px 0;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${name}</div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--accent3);">${avgSc} pts/carrera</div>
-        <div style="font-size:9px;color:var(--muted);">${data.races} carreras</div>
-      </div>
-      ${top.length?`<div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div><div style="font-size:9px;color:var(--success);margin-bottom:3px;">TOP 3 MEJORES</div>${best3.map(x=>`<span class="tag tgr">${x.t} (${x.a}p)</span>`).join('')}</div>
-        <div><div style="font-size:9px;color:var(--danger);margin-bottom:3px;">TOP 3 A MEJORAR</div>${worst3.map(x=>`<span class="tag tr">${x.t} (${x.a}p)</span>`).join('')}</div>
-      </div>`:''}
-    </div>`;
-  }).join('');}
+
+  if(!playerNames.length){
+    if(fbEl) fbEl.innerHTML='';
+    if(chartEl) chartEl.innerHTML='<div class="empty"><div class="et">Sin datos</div><div class="es">Registra wars con roster y posiciones.</div></div>';
+    if(ptEl) ptEl.innerHTML='';
+    return;
+  }
+
+  // Store globally for chart rendering
+  window._playerMap=playerMap;
+  window._playerNames=playerNames;
+
+  if(fbEl){
+    fbEl.innerHTML=playerNames.map((n,i)=>`<button onclick="renderPlayerChart('${n}')" id="pb-${n.replace(/\s/g,'_')}" class="tab${i===0?' active':''}" style="font-size:10px;">${n}</button>`).join('');
+  }
+
+  // Render table summary
+  if(ptEl){
+    ptEl.innerHTML=playerNames.map(name=>{
+      const data=playerMap[name];
+      const avgSc=data.races?Math.round((data.total/data.races)*10)/10:0;
+      const top=Object.entries(data.tracks).map(([t,arr])=>({t,a:avg(arr),c:arr.length})).sort((a,b)=>b.a-a.a);
+      const best3=top.slice(0,3);const worst3=[...top].sort((a,b)=>a.a-b.a).slice(0,3);
+      return`<div style="border-bottom:1px solid var(--border);padding:10px 0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${name}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--accent3);">${avgSc} pts/carrera</div>
+          <div style="font-size:9px;color:var(--muted);">${data.races} carreras · ${data.warScores.length} wars</div>
+        </div>
+        ${top.length?`<div style="display:flex;gap:14px;flex-wrap:wrap;">
+          <div><div style="font-size:9px;color:var(--success);margin-bottom:3px;font-family:var(--mono);">TOP 3 MEJORES</div>${best3.map(x=>`<span class="tag tgr">${x.t} <span style="opacity:0.7;">(${x.a}p)</span></span>`).join('')}</div>
+          <div><div style="font-size:9px;color:var(--danger);margin-bottom:3px;font-family:var(--mono);">TOP 3 A MEJORAR</div>${worst3.map(x=>`<span class="tag tr">${x.t} <span style="opacity:0.7;">(${x.a}p)</span></span>`).join('')}</div>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Render first player chart by default
+  renderPlayerChart(playerNames[0]);
 
   // TAB HISTORY
   const wlEl=document.getElementById('wars-list');
@@ -1183,6 +1267,83 @@ function refreshWars(){
     const myPos=w.races?w.races.map(r=>r.playerPositions?.[0]||0):[];
     return`<tr><td style="font-family:var(--mono);font-size:9px;color:var(--muted);">${w.date}</td><td style="font-size:10px;">${w.rivalName||w.rival||'—'}</td><td><span class="tag ${w.result==='win'?'tgr':w.result==='loss'?'tr':'tgy'}">${w.result==='win'?'Victoria':w.result==='loss'?'Derrota':'Empate'}</span></td><td style="font-family:var(--mono);font-size:10px;">${w.us}—${w.them}</td><td style="font-family:var(--mono);font-size:12px;font-weight:700;color:${diffCol};">${diff>0?'+':''}${diff}</td><td>${raceBreakdown(myPos)}</td></tr>`;
   }).join('')}</tbody></table>`;
+}
+
+// ════════════════════════════════════════
+// PLAYER INTERACTIVE CHART
+// ════════════════════════════════════════
+function renderPlayerChart(name){
+  const playerMap=window._playerMap||{};
+  const playerNames=window._playerNames||[];
+  const data=playerMap[name];
+  if(!data) return;
+
+  // Update active filter button
+  playerNames.forEach(n=>{
+    const btn=document.getElementById('pb-'+n.replace(/\s/g,'_'));
+    if(btn) btn.classList.toggle('active',n===name);
+  });
+
+  const chartEl=document.getElementById('player-chart-area');
+  if(!chartEl) return;
+
+  const avgSc=data.races?Math.round((data.total/data.races)*10)/10:0;
+  const trackData=Object.entries(data.tracks)
+    .map(([t,arr])=>({t,a:avg(arr),c:arr.length}))
+    .sort((a,b)=>b.a-a.a);
+
+  // War score trend
+  const warScores=data.warScores||[];
+  const maxWarScore=Math.max(...warScores.map(w=>w.score),1);
+
+  chartEl.innerHTML=`
+    <!-- Stats summary -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+      <div class="sc"><div class="sl">Pts/carrera avg</div><div class="sv ac">${avgSc}</div></div>
+      <div class="sc"><div class="sl">Carreras totales</div><div class="sv">${data.races}</div></div>
+      <div class="sc"><div class="sl">Wars jugadas</div><div class="sv">${warScores.length}</div></div>
+      <div class="sc"><div class="sl">Pts totales</div><div class="sv">${data.total}</div></div>
+    </div>
+
+    <!-- War score trend -->
+    ${warScores.length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Score por war</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:60px;background:var(--bg3);border-radius:8px;padding:8px 10px;">
+        ${warScores.map(w=>{
+          const h=Math.max(6,Math.round((w.score/maxWarScore)*44));
+          const col=w.result==='win'?'var(--success)':w.result==='loss'?'var(--danger)':'var(--warn)';
+          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+            <div style="font-family:var(--mono);font-size:7px;color:var(--muted);">${w.score}</div>
+            <div style="width:100%;height:${h}px;background:${col};border-radius:2px 2px 0 0;opacity:0.85;min-width:8px;cursor:default;" title="${w.date}: ${w.score} pts (${w.result})"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:var(--mono);font-size:8px;color:var(--muted);">
+        <span>más antiguo</span><span>más reciente</span>
+      </div>
+    </div>`:''}
+
+    <!-- Track performance horizontal bars -->
+    ${trackData.length?`
+    <div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Rendimiento por pista (pts avg · hover para detalles)</div>
+      <div style="max-height:280px;overflow-y:auto;padding-right:4px;">
+        ${trackData.map(x=>{
+          const col=x.a>=12?'var(--success)':x.a>=9?'var(--accent3)':x.a>=7?'var(--warn)':x.a>=5?'var(--muted2)':'var(--danger)';
+          const barW=Math.round((x.a/15)*100);
+          return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;" title="${x.t}: ${x.a} pts avg en ${x.c} carreras">
+            <div style="width:130px;font-size:10px;color:var(--text);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${x.t}">${x.t}</div>
+            <div style="flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${barW}%;background:${col};border-radius:4px;transition:width 0.4s ease;"></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:${col};width:32px;text-align:right;">${x.a}p</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--muted);width:20px;">${x.c}×</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:'<div class="empty"><div class="es">Sin datos de pistas para este jugador.</div></div>'}
+  `;
 }
 
 function showRivalDetail(rivalName){
